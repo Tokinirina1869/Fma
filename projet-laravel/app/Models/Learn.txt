@@ -1,0 +1,51 @@
+
+* Model : (où tu définis la relation)
+
+* Controller :  (où tu appelles cette relation pour charger les données)
+
+* React.js frontend : (où tu consommes l’API avec axios pour afficher les infos liées). 1. Le rôle d’un Model en Laravel
+
+
+✅ Donc, pour résumer :
+
+* hasMany = "un → plusieurs"
+
+* belongsTo = "plusieurs → un"
+
+* belongsToMany = "plusieurs ↔ plusieurs (table pivot)"
+
+* hasOne = "un → un"
+
+👉 Quelques exemples :
+
+* $table → pour préciser le nom de la table (si ce n’est pas le pluriel automatique du Model). 
+
+* $primaryKey → pour préciser la clé primaire.
+
+* $incrementing → pour dire si la clé est auto-incrémentée.
+
+* $keyType → pour préciser le type de la clé (string ou int).
+
+* $fillable → liste des colonnes qui peuvent être insérées en mass assignment.
+
+* $hidden → colonnes qu’on veut cacher lors d’un retour JSON.
+
+* $casts → pour transformer automatiquement des colonnes en types (datetime, boolean, etc.).
+
+* Un Model est une classe qui représente une table dans la base de données.
+
+* Le fichier Personne.php correspond à la table personnes.
+
+* Le fichier Inscription.php correspond à la table inscriptions.
+
+Chaque Model sert à :
+✅ définir la table (protected $table)
+✅ définir la clé primaire (protected $primaryKey)
+✅ gérer les colonnes modifiables ($fillable)
+✅ déclarer les relations entre les tables (avec belongsTo, hasMany, etc.)
+
+Parfait 👍 je vais te montrer **le lien entre :**
+
+* le **Model** (où tu définis la relation)
+* le **Controller** (où tu appelles cette relation pour charger les données)
+* le **React.js frontend** (où tu consommes l’API avec axios pour afficher les infos liées).

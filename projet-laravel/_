@@ -1,0 +1,10 @@
+[90m= [39m[34;4mApp\Models\Inscription[39;24m {#6143
+    [34mno_inscrit[39m: [35m4[39m,
+    [34mmatricule[39m: "[32mFMA0001                                           [39m",
+    [34mdateinscrit[39m: "[32m2025-10-08[39m",
+    [34manneesco[39m: "[32m2010-2011[39m",
+    [34mcreated_at[39m: "[32m2025-10-08 05:40:40[39m",
+    [34mupdated_at[39m: "[32m2025-10-08 05:40:40[39m",
+    [34mpersonne[39m: [36mnull[39m,
+  }
+
