@@ -23,7 +23,6 @@ const NavigationPage = ({ handleMenuChange, onLogout, onProfil}) => {
     { key: "formation", text: "CFP", icon: <School color="primary" />, label: "CFP", iconDesktop: <FaUserGraduate size={20} color="primary" /> },
     { key: "paiement", text: "Paiement", icon: <MonetizationOn color="primary" />, label: "Paiement", iconDesktop: <MonetizationOn size={20} /> },
     { key: "chat", text: "Conversation", icon: <FaComments color="primary" />, label: "Conversation", iconDesktop: <FaComments size={20} color="primary" /> },
-    { key: "aide", text: "Aide", icon: <FaQuestionCircle color="primary" />, label: "Aide", iconDesktop: <FaQuestionCircle size={20} color="primary" /> },
   ];
 
   // Filtrer les menus en fonction du rôle
@@ -33,10 +32,10 @@ const NavigationPage = ({ handleMenuChange, onLogout, onProfil}) => {
       return allMenus; 
     }
     if (role === 'secretaire_lycee') {
-      return allMenus.filter(m => m.key === 'eleve' || m.key === 'paiement' || m.key == "chat" || m.key == "aide");
+      return allMenus.filter(m => m.key === 'eleve' || m.key === 'paiement' || m.key == "chat");
     }
     if (role === 'secretaire_cfp') {
-      return allMenus.filter(m => m.key === 'formation' || m.key === 'paiement' || m.key == "chat" || m.key == "aide");
+      return allMenus.filter(m => m.key === 'formation' || m.key === 'paiement' || m.key == "chat");
     }
     return []; 
   };
