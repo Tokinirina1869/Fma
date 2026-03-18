@@ -15,7 +15,7 @@ import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 
 /* ── Config ── */
-const API_URL      = import.meta.env.VITE_API_URL || "https://fma-inscription.onrender.com/";
+const API_URL      = import.meta.env.VITE_API_URL || "https://fma-inscription.onrender.com/api";
 const PIE_COLORS   = ["#4F46E5", "#f59e0b", "#e11d48", "#0ea5e9", "#10b981", "#8b5cf6"];
 const SEXE_COLORS  = ["#3B82F6", "#EC4899"];
 const AGE_COLORS   = ["#EF4444", "#10B981"];
@@ -70,8 +70,8 @@ const DashboardEleve = ({ onViewList }) => {
       const params = annee ? { annee_scolaire: annee } : {};
 
       const [dashRes, niveauxRes] = await Promise.allSettled([
-        axios.get(`${API_URL}/api/dashboard/academie-stats`, { params }),
-        axios.get(`${API_URL}/api/niveaux/list`),
+        axios.get(`${API_URL}/dashboard/academie-stats`, { params }),
+        axios.get(`${API_URL}/niveaux/list`),
       ]);
 
       // Dashboard data
