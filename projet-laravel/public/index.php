@@ -1,53 +1,49 @@
 <?php
 
-// public/index.php
-// ✅ CORS headers ajoutés AVANT que Laravel démarre
-// Cela bypass tous les problèmes de middleware sur Render
-
-$allowedOrigins = [
-    'https://fma-six.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000',
-];
-
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-
-$isAllowed = in_array($origin, $allowedOrigins)
-    || (bool) preg_match('#^https://fma.*\.vercel\.app$#', $origin);
-
-if ($isAllowed) {
-    header("Access-Control-Allow-Origin: $origin");
-    header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept");
-    header("Access-Control-Allow-Credentials: false");
-    header("Access-Control-Max-Age: 86400");
-}
-
-// Répondre immédiatement aux requêtes OPTIONS (preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit();
-}
-
-// ════════════════════════════════════════════════════════
-// Le reste est le contenu original de public/index.php
-// NE PAS MODIFIER CE QUI SUIT
-// ════════════════════════════════════════════════════════
-
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Determine if the application is in maintenance mode...
+/*
+|--------------------------------------------------------------------------
+| Check If The Application Is Under Maintenance
+|--------------------------------------------------------------------------
+|
+| If the application is in maintenance / demo mode via the "down" command
+| we will load this file so that any pre-rendered content can be shown
+| instead of starting the framework, which could cause an exception.
+|
+*/
+
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;
 }
 
-// Register the Composer autoloader...
+/*
+|--------------------------------------------------------------------------
+| Register The Auto Loader
+|--------------------------------------------------------------------------
+|
+| Composer provides a convenient, automatically generated class loader for
+| this application. We just need to utilize it! We'll simply require it
+| into the script here so we don't need to manually load our classes.
+|
+*/
+
 require __DIR__.'/../vendor/autoload.php';
 
-// Bootstrap Laravel and handle the request...
+/*
+|--------------------------------------------------------------------------
+| Run The Application
+|--------------------------------------------------------------------------
+|
+| Once we have the application, we can handle the incoming request using
+| the application's HTTP kernel. Then, we will send the response back
+| to this client's browser, allowing them to enjoy our application.
+|
+*/
+
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
