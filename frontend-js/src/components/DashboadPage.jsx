@@ -14,7 +14,7 @@ import {
 
 /* ── Constants ── */
 const SECONDARY_COLOR = '#4F46E5';
-const BASE_URL        = 'http://localhost:8000/api';
+const BASE_URL        = 'https://fma-inscription.onrender.com/api';
 const AGE_COLORS      = ['#EF4444', '#10B981'];
 const GENDER_COLORS   = ['#EC4899', '#3B82F6'];
 const MONTH_COLORS    = ['#4F46E5','#818CF8','#6366F1','#A5B4FC','#C7D2FE','#3730A3','#4338CA','#6D28D9','#7C3AED','#8B5CF6','#A78BFA','#DDD6FE'];
