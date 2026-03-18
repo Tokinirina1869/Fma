@@ -7,7 +7,7 @@ import axios from "axios";
 import { FaGraduationCap } from "react-icons/fa";
 import ReinscriptionCfp from "../modals/ReinscriptionCfp";
 
-const url = "http://127.0.0.1:8000/api";
+const url = "https://fma-inscription.onrender.com/api";
 
 const ListeFormation = ({ onViewDashPro }) => {
   const [showPersonne, setShowPersonne] = useState(false);
