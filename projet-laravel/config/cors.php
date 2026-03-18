@@ -21,13 +21,13 @@ return [
 
     'allowed_origins' => ['https://fma-six.vercel.app'],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => ['#^https://fma.*\.vercel\.app$#',],
 
     'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    'max_age' => 86400,
 
     'supports_credentials' => false,
 
