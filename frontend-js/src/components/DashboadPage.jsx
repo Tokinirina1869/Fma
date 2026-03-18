@@ -31,7 +31,7 @@ const CustomTooltip = ({ active, payload, label, unit = '' }) => {
       ? `${formatAriary(payload[0].value)} Ar`
       : `${formatAriary(payload[0].value)} ${unit}`;
   return (
-    <div className="px-3 py-2 border border-gray-200 rounded-xl shadow-lg text-sm">
+    <div className="bg-white px-3 py-2 border border-gray-200 rounded-xl shadow-lg text-sm">
       <p className="font-semibold text-gray-700 mb-0.5">{label}</p>
       <p className="text-indigo-600 font-bold">{displayValue}</p>
     </div>
@@ -156,7 +156,7 @@ function DashboardPage({ autre }) {
         <div className="flex items-center gap-3 flex-wrap">
           {/* Sélecteur d'année scolaire */}
           <div className="relative">
-            <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
               <FaCalendarAlt className="text-indigo-500" size={13} />
               <select
                 value={anneeScolaire}
@@ -174,7 +174,7 @@ function DashboardPage({ autre }) {
 
           {/* Rafraîchir */}
           <button onClick={() => fetchData(anneeScolaire)}
-            className="flex items-center gap-2 border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl shadow-sm hover:bg-gray-50 transition text-sm font-semibold"
+            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl shadow-sm hover:bg-gray-50 transition text-sm font-semibold"
           >
             <FaSync size={12} /> Actualiser
           </button>
@@ -243,17 +243,17 @@ function DashboardPage({ autre }) {
       {/* ── Graphiques ligne 1 ── */}
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {Array(3).fill(0).map((_, i) => <Skeleton key={i} h="h-90" />)}
+          {Array(3).fill(0).map((_, i) => <Skeleton key={i} h="h-80" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
           {/* Pie Âge */}
-          <div className="rounded-2xl shadow p-5 hover:shadow-md transition">
-            <h2 className="text-base font-bold mb-4 flex items-center gap-2 border-b pb-3">
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Répartition par Âge
             </h2>
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={320}>
               {charts.ageData.length > 0 ? (
                 <PieChart>
                   <Pie data={charts.ageData} dataKey="total" nameKey="categorie"
@@ -270,7 +270,7 @@ function DashboardPage({ autre }) {
           </div>
 
           {/* Pie Sexe */}
-          <div className="rounded-2xl shadow p-5 hover:shadow-md transition">
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
             <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Répartition par Sexe
             </h2>
@@ -291,8 +291,8 @@ function DashboardPage({ autre }) {
           </div>
 
           {/* Pie Recette par mois */}
-          <div className="rounded-2xl shadow p-5 hover:shadow-md transition">
-            <h2 className="text-base font-bold mb-4 flex items-center gap-2 border-b pb-3">
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Recette par mois
             </h2>
             <ResponsiveContainer width="100%" height={280}>
@@ -317,14 +317,14 @@ function DashboardPage({ autre }) {
       {/* ── Graphiques ligne 2 ── */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Skeleton h="h-80" /> <Skeleton h="h-90" />
+          <Skeleton h="h-80" /> <Skeleton h="h-80" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
           {/* BarChart recette 4 semaines */}
-          <div className="rounded-2xl shadow p-5 hover:shadow-md transition">
-            <h2 className="text-base font-bold mb-4 flex items-center gap-2 border-b pb-3">
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Recette (4 dernières semaines)
             </h2>
             <ResponsiveContainer width="100%" height={320}>
@@ -345,8 +345,8 @@ function DashboardPage({ autre }) {
           </div>
 
           {/* Area chart inscriptions semaine courante */}
-          <div className="rounded-2xl shadow p-5 hover:shadow-md transition">
-            <h2 className="text-base font-bold mb-4 flex items-center gap-2 border-b pb-3">
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" />
               <FaCalendarDay className="text-indigo-600" size={13} /> Inscrits cette semaine
             </h2>
@@ -389,9 +389,9 @@ function DashboardPage({ autre }) {
       {loading ? (
         <Skeleton h="h-72" />
       ) : (
-        <div className="rounded-2xl shadow p-5 hover:shadow-md transition">
+        <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
           <div className="flex items-center justify-between border-b pb-3 mb-4">
-            <h2 className="text-base font-bold flex items-center gap-2">
+            <h2 className="text-base font-bold text-gray-700 flex items-center gap-2">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" />
               Inscriptions par mois — Année scolaire {labelAS}
             </h2>
