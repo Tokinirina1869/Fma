@@ -64,7 +64,7 @@ const NouvellePersonne = ({ show, handleClose, refreshList }) => {
   useEffect(() => {
     const fetchParcours = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/parcours');
+        const response = await axios.get('https://fma-inscription.onrender.com/api/parcours');
         setParcoursOption(response.data);
       } catch (err) {
         console.error("Erreur lors du chargement des parcours ", err);
@@ -255,7 +255,7 @@ const NouvellePersonne = ({ show, handleClose, refreshList }) => {
       });
 
       // Envoi
-      await axios.post("http://localhost:8000/api/inscriptionComplete", formData, {
+      await axios.post("https://fma-inscription.onrender.com/api/inscriptionComplete", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

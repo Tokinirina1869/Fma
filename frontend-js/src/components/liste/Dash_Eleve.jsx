@@ -8,7 +8,7 @@ import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
 // Ensure the local URL is accessible for the component
-const url = 'http://localhost:8000/api';
+const url = 'https://fma-inscription.onrender.com/api';
 const PIE_COLORS = ["#0f53b8ff", "#f59e0b", "#e11d48", "#0ea5e9", "#10b981", "#8b5cf6"];
 const PRIMARY_COLOR = '#143C78';
 const SEXE_COLORS = ["#0ac81aff", "#ec4899"]; 

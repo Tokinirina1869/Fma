@@ -48,10 +48,10 @@ const EleveRow = ({ e, onDetails, onCarte, onEdit, onDelete, onPhotoClick }) => 
       <td className="px-2 py-2 text-center">
         {pers?.photo ? (
           <img
-            src={`http://localhost:8000/storage/${pers.photo}`}
+            src={`https://fma-inscription.onrender.com/storage/${pers.photo}`}
             alt="photo"
             className="w-10 h-10 rounded-full mx-auto cursor-pointer border-2 border-indigo-500 object-cover"
-            onClick={() => onPhotoClick(`http://localhost:8000/storage/${pers.photo}`)}
+            onClick={() => onPhotoClick(`https://fma-inscription.onrender.com/storage/${pers.photo}`)}
           />
         ) : (
           <span className="text-gray-400 text-sm">Aucune</span>

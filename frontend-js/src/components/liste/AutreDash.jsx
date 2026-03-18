@@ -6,7 +6,7 @@ import { ArrowBack } from '@mui/icons-material';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const URL = "http://localhost:8000/api";
+const URL = "https://fma-inscription.onrender.com/api";
 
 function SchoolDashboard({ retourDash }) {
   const [parcours, setParcours] = useState([]);

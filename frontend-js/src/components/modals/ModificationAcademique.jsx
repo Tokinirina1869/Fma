@@ -6,7 +6,7 @@ import { FaGraduationCap,FaTimes,FaUser, FaPlus, FaTrash, FaUserAlt, FaCheck, Fa
 import { GraduationCap, User, UserPlus, Users, Calendar, MapPin, Phone } from "lucide-react";
 import Swal from "sweetalert2";
 
-const url = "http://localhost:8000/api";
+const url = "https://fma-inscription.onrender.com/api";
 
 const ModificationAcademique = ({ show, handleClose, selectedPersonne: selectedPersonneProp, refreshList }) => {
   const today = new Date().toISOString().split("T")[0];
@@ -188,7 +188,7 @@ const ModificationAcademique = ({ show, handleClose, selectedPersonne: selectedP
         nomniveau: selectedPersonne.niveau?.nomniveau || "",
         photo: null,
         profileImage: selectedPersonne.inscription?.personne?.photo
-          ? `http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}`
+          ? `https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}`
           : "https://placehold.co/128x128/FFFFFF/000000?text=Photo",
       };
 

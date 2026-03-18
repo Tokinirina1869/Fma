@@ -101,8 +101,8 @@ export default function CarteEcolage({ matricule, open, handleClose }) {
       setLoading(true);
       try {
         const [EcolageRes, FraisRes] = await Promise.all([
-          axios.get(`http://localhost:8000/api/ecolage/${matricule}`),
-          axios.get(`http://localhost:8000/api/frais`)
+          axios.get(`https://fma-inscription.onrender.com/api/ecolage/${matricule}`),
+          axios.get(`https://fma-inscription.onrender.com/api/frais`)
         ]);
 
         // Récupérer tous les noms de frais

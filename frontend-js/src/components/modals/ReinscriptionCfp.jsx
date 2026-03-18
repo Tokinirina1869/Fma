@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const url = 'http://localhost:8000/api';
+const url = 'https://fma-inscription.onrender.com/api';
 
 const ReinscriptionCfp = ({ show, handleclose, initialMatricule = '', onReinscriptionSuccess }) => {
   const [matricule, setMatricule] = useState(initialMatricule);

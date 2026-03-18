@@ -54,7 +54,7 @@ const ApprenantRow = ({ p, onDetails, onCarte, onEdit, onDelete }) => {
       <td className="px-2 py-2 text-center">
         {pers?.photo ? (
           <img
-            src={`http://localhost:8000/storage/${pers.photo}`}
+            src={`https://fma-inscription.onrender.com/storage/${pers.photo}`}
             alt="photo"
             className="w-10 h-10 rounded-full mx-auto border-2 border-indigo-500 object-cover"
           />

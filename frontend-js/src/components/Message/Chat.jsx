@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext, useCallback } from 'rea
 import axios from 'axios';
 import { AuthContext } from '../Users/AuthContext';
 
-const API = 'http://localhost:8000/api';
+const API = 'https://fma-inscription.onrender.com/api';
 
 const getInitials = (name = '') =>
   name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);

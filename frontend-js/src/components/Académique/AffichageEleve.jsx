@@ -14,7 +14,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import ListeEleves from "./ListeEleves";
 
-const url = 'http://localhost:8000/api';
+const url = 'https://fma-inscription.onrender.com/api';
 
 function AffichageEleve() {
     const [modelUpdate, setModalUpdate] = useState(false);
@@ -354,7 +354,7 @@ function AffichageEleve() {
                 <div style="flex-shrink: 0;">
                   <div style="width: 80px; height: 80px; background: #f3f4f6; border-radius: 8px; border: 2px solid #4f46e5; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                     ${selectedPersonne.inscription?.personne?.photo ? 
-                      `<img src="http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}" 
+                      `<img src="https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}" 
                            alt="Photo" 
                            style="width: 100%; height: 100%; object-fit: cover;" />` : 
                       '<span style="color: #9ca3af; font-size: 24px;">👤</span>'}
@@ -688,7 +688,7 @@ function AffichageEleve() {
                                     <div className="w-20 h-20 rounded-full border-4 border-indigo-500 overflow-hidden bg-gray-200 flex items-center justify-center print:border-indigo-500">
                                         {selectedPersonne.inscription?.personne?.photo ? (
                                             <img
-                                                src={`http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}`}
+                                                src={`https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}`}
                                                 alt="Photo étudiant"
                                                 className="w-full h-full object-cover"
                                             />
@@ -839,12 +839,12 @@ function AffichageEleve() {
                                             >
                                                 {selectedPersonne.inscription?.personne?.photo ? (
                                                     <img
-                                                        src={`http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}`}
+                                                        src={`https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}`}
                                                         alt="Photo de profil"
                                                         className="w-full h-full object-cover cursor-pointer rounded-full"
                                                         onClick={() =>
                                                             setSelectedImage(
-                                                                `http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}`
+                                                                `https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}`
                                                             )
                                                         }
                                                     />

@@ -14,7 +14,7 @@ import { ThemeContext } from "../ThemeContext";
 import fma from '../../../public/laura.jpg';
 import ListeApprenants from "./ListeApprenants";
 
-const url = "http://localhost:8000/api";
+const url = "https://fma-inscription.onrender.com/api";
 
 // Composant InfoRowCarte pour la carte étudiante
 const InfoRowCarte = ({ label, value, className = "" }) => (
@@ -80,7 +80,7 @@ const CarteEtudiante = ({ student, isPrint = false }) => {
             <div className="photo-container-print">
               {student.inscription?.personne?.photo ? (
                 <img 
-                  src={`http://localhost:8000/storage/${student.inscription.personne.photo}`}
+                  src={`https://fma-inscription.onrender.com/storage/${student.inscription.personne.photo}`}
                   alt={`${student.inscription.personne.nom} ${student.inscription.personne.prenom}`}
                 />
               ) : (
@@ -205,7 +205,7 @@ const CarteEtudiante = ({ student, isPrint = false }) => {
             <div className="w-20 h-24 bg-gray-200 rounded-lg border-2 border-indigo-500 overflow-hidden flex items-center justify-center">
               {student.inscription?.personne?.photo ? (
                 <img 
-                  src={`http://localhost:8000/storage/${student.inscription.personne.photo}`}
+                  src={`https://fma-inscription.onrender.com/storage/${student.inscription.personne.photo}`}
                   alt={`${student.inscription.personne.nom} ${student.inscription.personne.prenom}`}
                   className="w-full h-full object-cover"
                 />
@@ -378,7 +378,7 @@ function AffichageFormation({ formations }) {
             <div style="flex-shrink: 0;">
               <div style="width: 80px; height: 80px; background: #f3f4f6; border-radius: 8px; border: 2px solid #4f46e5; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                 ${selectedPersonne.inscription?.personne?.photo ? 
-                  `<img src="http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}" 
+                  `<img src="https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}" 
                        alt="Photo" 
                        style="width: 100%; height: 100%; object-fit: cover;" />` : 
                   '<span style="color: #9ca3af; font-size: 24px;">👤</span>'}
@@ -1009,12 +1009,12 @@ function AffichageFormation({ formations }) {
                       >
                         {selectedPersonne.inscription?.personne?.photo ? (
                           <img
-                            src={`http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}`}
+                            src={`https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}`}
                             alt="Photo de profil"
                             className="w-full h-full object-cover cursor-pointer rounded-full"
                             onClick={() =>
                               setSelectedImage(
-                                `http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}`
+                                `https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}`
                               )
                             }
                           />
@@ -1285,7 +1285,7 @@ function AffichageFormation({ formations }) {
                             <div className="w-20 h-20 rounded-full border-4 border-indigo-500 overflow-hidden bg-gray-200 flex items-center justify-center print:border-indigo-500">
                                 {selectedPersonne.inscription?.personne?.photo ? (
                                     <img
-                                        src={`http://localhost:8000/storage/${selectedPersonne.inscription.personne.photo}`}
+                                        src={`https://fma-inscription.onrender.com/storage/${selectedPersonne.inscription.personne.photo}`}
                                         alt="Photo étudiant"
                                         className="w-full h-full object-cover"
                                     />

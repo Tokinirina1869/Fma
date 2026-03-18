@@ -17,7 +17,7 @@ const PIE_COLORS = [
 const sexe_Colors = ["#bf0c33ff", "#143C78"];
 const minmaj_Colors = ["#061389ff", "#087f0aff"];
 
-const url = "http://localhost:8000/api";
+const url = "https://fma-inscription.onrender.com/api";
 
 // Composant pour la carte KPI
 const KpiCard = ({ title, icon, value, color, bg }) => {

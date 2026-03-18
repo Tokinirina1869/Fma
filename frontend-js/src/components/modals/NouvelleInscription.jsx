@@ -98,7 +98,7 @@ const NouvelleInscription = ({ show, handleClose, refreshList, searchEleve }) =>
   useEffect(() => {
     const fetchniveau = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/niveau');
+        const response = await axios.get('https://fma-inscription.onrender.com/api/niveau');
         setNiveauOption(response.data.data);
       } catch (err) {
         console.error("Erreur lors du chargement des niveaux ", err);
@@ -111,7 +111,7 @@ const NouvelleInscription = ({ show, handleClose, refreshList, searchEleve }) =>
   useEffect(() => {
     const fetchPersonnes = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/personnes');
+        const response = await axios.get('https://fma-inscription.onrender.com/api/personnes');
         setPersonnesList(response.data.data || []);
       } catch (err) {
         console.error("Erreur lors du chargement des personnes ", err);
@@ -167,7 +167,7 @@ const NouvelleInscription = ({ show, handleClose, refreshList, searchEleve }) =>
       phonetuteur: personne.phonetuteur || "",
       photo: personne.photo || null,
       profileImage: personne.photo
-        ? `http://localhost:8000/storage/${personne.photo}`
+        ? `https://fma-inscription.onrender.com/storage/${personne.photo}`
         : "https://placehold.co/128x128/FFFFFF/000000?text=Photo",
     }));
 
@@ -246,7 +246,7 @@ const NouvelleInscription = ({ show, handleClose, refreshList, searchEleve }) =>
         phonetuteur: p.phonetuteur || "",
         photo: p.photo || null,
         profileImage: p.photo
-          ? `http://localhost:8000/storage/${p.photo}`
+          ? `https://fma-inscription.onrender.com/storage/${p.photo}`
           : "https://placehold.co/128x128/FFFFFF/000000?text=Photo",
           
         dateinscrit: today,
@@ -556,7 +556,7 @@ const NouvelleInscription = ({ show, handleClose, refreshList, searchEleve }) =>
         }
         
         // 4. Envoi de la requête
-        await axios.post("http://localhost:8000/api/addacademique", formData, {
+        await axios.post("https://fma-inscription.onrender.com/api/addacademique", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         

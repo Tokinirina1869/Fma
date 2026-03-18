@@ -74,7 +74,7 @@ const ModificationInscription = ({ show, handleClose, personneData, refreshList 
   useEffect(() => {
     const fetchParcours = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/parcours');
+        const response = await axios.get('https://fma-inscription.onrender.com/api/parcours');
         setParcoursOption(response.data);
       } catch (err) {
         console.error("Erreur lors du chargement des parcours ", err);
@@ -121,7 +121,7 @@ const ModificationInscription = ({ show, handleClose, personneData, refreshList 
         type_formation: personneData.type_formation || "Court Terme",
         photo: null,
         profileImage: personne.photo
-          ? `http://localhost:8000/storage/${personne.photo}`
+          ? `https://fma-inscription.onrender.com/storage/${personne.photo}`
           : "https://placehold.co/128x128/FFFFFF/000000?text=Photo",
       };
 
@@ -503,7 +503,7 @@ const ModificationInscription = ({ show, handleClose, personneData, refreshList 
 
       formData.append("_method", "PATCH");
 
-      await axios.post(`http://localhost:8000/api/inscriptionComplete/${form.matricule}`, formData, {
+      await axios.post(`https://fma-inscription.onrender.com/api/inscriptionComplete/${form.matricule}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       

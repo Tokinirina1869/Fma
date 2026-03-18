@@ -21,7 +21,7 @@ jsPDF.API.autoTable = autoTable;
 const monthOptions = [
   'Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'
 ];
-const url = 'http://localhost:8000/api';
+const url = 'https://fma-inscription.onrender.com/api';
 
 const initialPayment = {
   no_paie: '', no_inscrit: '', matricule: '', idfrais: '',nomfraispayés:'',

@@ -249,7 +249,7 @@ function Register() {
     try {
       console.log('🔄 Envoi des données à l\'API:', formData);
       
-      const response = await fetch('http://localhost:8000/api/register', {
+      const response = await fetch('https://fma-inscription.onrender.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

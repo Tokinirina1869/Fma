@@ -9,7 +9,7 @@ const getApiUrl = () => {
     
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       // Développement local
-      return 'http://localhost:8000/api';
+      return 'https://fma-inscription.onrender.com/api';
     } else {
       // Production - utiliser l'URL relative
       return '/api';
@@ -17,7 +17,7 @@ const getApiUrl = () => {
   }
   
   // Fallback par défaut
-  return 'http://localhost:8000/api';
+  return 'https://fma-inscription.onrender.com/api';
 };
 
 const API_URL = getApiUrl();

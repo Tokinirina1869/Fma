@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   // AJOUTEZ CETTE FONCTION
   const register = async (userData) => {
     try {
-      const response = await fetch('http://localhost:8000/api/register', {
+      const response = await fetch('https://fma-inscription.onrender.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

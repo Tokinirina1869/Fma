@@ -9,7 +9,7 @@ import {
 } from "recharts";
 
 const SECONDARY_COLOR = '#4F46E5';
-const url = 'http://localhost:8000/api';
+const url = 'https://fma-inscription.onrender.com/api';
 
 const CHART_COLORS_PRIMARY = [SECONDARY_COLOR, '#818CF8', '#A569BD', '#FF8042', '#00C49F', '#FFBB28']; 
 const AGE_COLORS = ['#EF4444', '#10B981']; 
