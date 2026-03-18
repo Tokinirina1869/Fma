@@ -1,372 +1,431 @@
-import React from 'react';
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaArrowRight, FaList, FaChild, FaUserTie, FaUsers, FaUserGraduate, FaChalkboardTeacher, FaMoneyCheckAlt, FaExclamationTriangle, FaCalendarDay } from "react-icons/fa";
+import {
+  FaArrowRight, FaList, FaChild, FaUserTie, FaUsers, FaUserGraduate,
+  FaChalkboardTeacher, FaMoneyCheckAlt, FaExclamationTriangle,
+  FaCalendarDay, FaCalendarAlt, FaChevronDown, FaSync
+} from "react-icons/fa";
 import CountUp from "react-countup";
 import {
-  PieChart, Pie, Cell, Legend, Tooltip, Area,AreaChart,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer
+  PieChart, Pie, Cell, Legend, Tooltip,
+  Area, AreaChart, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from "recharts";
 
+/* ── Constants ── */
 const SECONDARY_COLOR = '#4F46E5';
-const url = 'https://fma-inscription.onrender.com/api';
+const BASE_URL        = 'http://localhost:8000/api';
+const AGE_COLORS      = ['#EF4444', '#10B981'];
+const GENDER_COLORS   = ['#EC4899', '#3B82F6'];
+const MONTH_COLORS    = ['#4F46E5','#818CF8','#6366F1','#A5B4FC','#C7D2FE','#3730A3','#4338CA','#6D28D9','#7C3AED','#8B5CF6','#A78BFA','#DDD6FE'];
 
-const CHART_COLORS_PRIMARY = [SECONDARY_COLOR, '#818CF8', '#A569BD', '#FF8042', '#00C49F', '#FFBB28']; 
-const AGE_COLORS = ['#EF4444', '#10B981']; 
-const GENDER_COLORS = ['#EC4899', '#3B82F6']; 
-
-// Fonction de formatage pour les nombres en Ariary
-const formatAriary = (value) => {
-  return new Intl.NumberFormat('mg-MG').format(value);
-};
+/* ── Helpers ── */
+const formatAriary = (v) => new Intl.NumberFormat('fr-MG').format(v ?? 0);
 
 const CustomTooltip = ({ active, payload, label, unit = '' }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    
-    let displayValue;
-    if (data.pourcentage) {
-      displayValue = `${formatAriary(data.total)} Apprenants (${data.pourcentage}%)`;
-    } else if (unit === 'Ar') {
-      displayValue = `${formatAriary(payload[0].value)} ${unit}`;
-    } else {
-      displayValue = `${formatAriary(payload[0].value)} ${unit}`;
-    }
-
-    return (
-      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md">
-        <p className="text-sm text-gray-800 font-semibold">{label}</p>
-        <p className="text-sm text-indigo-600">{displayValue}</p>
-      </div>
-    );
-  }
-  return null;
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  const displayValue = d.pourcentage
+    ? `${formatAriary(d.total)} Apprenants (${d.pourcentage}%)`
+    : unit === 'Ar'
+      ? `${formatAriary(payload[0].value)} Ar`
+      : `${formatAriary(payload[0].value)} ${unit}`;
+  return (
+    <div className="bg-white px-3 py-2 border border-gray-200 rounded-xl shadow-lg text-sm">
+      <p className="font-semibold text-gray-700 mb-0.5">{label}</p>
+      <p className="text-indigo-600 font-bold">{displayValue}</p>
+    </div>
+  );
 };
 
-function DashboardPage({ autre }) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // États unifiés
-  const [dashboardData, setDashboardData] = useState({
-    totals: {
-      general: 0,
-      eleve: 0,
-      formation: 0,
-      paiement: 0
-    },
-    demographics: {
-      mineurs: 0,
-      majeurs: 0
-    },
-    charts: {
-      ageData: [],
-      sexeData: [],
-      paiementsSemaine: [],
-      paiementsMois: []
-    },
-    dailyTotals: []
-  });
+const EmptyChart = ({ message }) => (
+  <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
+    <FaExclamationTriangle size={32} />
+    <p className="text-sm text-center">{message}</p>
+  </div>
+);
 
-  const fetchAllData = async () => {
+/* ── Skeleton loader ── */
+const Skeleton = ({ h = "h-32", className = "" }) => (
+  <div className={`animate-pulse bg-gray-200 rounded-2xl ${h} ${className}`} />
+);
+
+/* ══════════════════════════════════════════════════════════ */
+function DashboardPage({ autre }) {
+  const [loading,          setLoading]          = useState(true);
+  const [error,            setError]            = useState(null);
+  const [anneeScolaire,    setAnneeScolaire]     = useState('');   // '' = en cours
+  const [anneesDispos,     setAnneesDispos]      = useState([]);
+  const [dashboardData,    setDashboardData]     = useState(null);
+  const [labelAS,          setLabelAS]           = useState('');
+
+  /* ── Fetch ── */
+  const fetchData = async (annee = '') => {
     setLoading(true);
     setError(null);
-    
     try {
-      const response = await axios.get(`${url}/dashboard/global-stats`);
-      const data = response.data.data || {};
+      const params = annee ? { annee_scolaire: annee } : {};
+      const res  = await axios.get(`${BASE_URL}/dashboard/global-stats`, { params });
+      const data = res.data.data || {};
 
       setDashboardData({
         totals: {
-          general: data.total_general || 0,
-          eleve: data.total_eleve || 0,
+          general:   data.total_general   || 0,
+          eleve:     data.total_eleve     || 0,
           formation: data.total_formation || 0,
-          paiement: data.total_paiement || 0
+          paiement:  data.total_paiement  || 0,
+          montant:   data.total_montant_annee_scolaire || 0,
         },
         demographics: {
           mineurs: data.mineurs_global || 0,
-          majeurs: data.majeurs_global || 0
+          majeurs: data.majeurs_global || 0,
         },
         charts: {
-          ageData: data.age_data || [],
-          sexeData: data.sexe_data || [],
-          paiementsSemaine: data.paiements_semaine || [],
-          paiementsMois: data.paiements_mois || []
+          ageData:          data.age_data              || [],
+          sexeData:         data.sexe_data             || [],
+          paiementsSemaine: data.paiements_semaine     || [],
+          paiementsMois:    data.paiements_mois        || [],
+          inscriptionsParMois: data.inscriptions_par_mois || [],
         },
-        dailyTotals: data.inscriptions_par_jour || [] 
+        dailyTotals:  data.inscriptions_par_jour || [],
+        today: {
+          total: data.inscrit_today       || 0,
+          cfp:   data.inscrit_today_cfp   || 0,
+          lycee: data.inscrit_today_lycee || 0,
+        },
       });
 
+      setLabelAS(data.annee_scolaire?.label || '');
+      if (data.annees_disponibles?.length) setAnneesDispos(data.annees_disponibles);
     } catch (err) {
-      console.error("Erreur générale lors du chargement:", err);
-      setError("Erreur lors du chargement des données. Veuillez rafraîchir la page.");
+      console.error(err);
+      setError("Erreur lors du chargement. Veuillez rafraîchir.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAllData();
-  }, []);
+  useEffect(() => { fetchData(anneeScolaire); }, [anneeScolaire]);
 
-  // Composant d'erreur
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
-          <FaExclamationTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Erreur de chargement</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button 
-            onClick={fetchAllData}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-300"
-          >
-            Réessayer
-          </button>
-        </div>
+  /* ── Error state ── */
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
+        <FaExclamationTriangle className="w-14 h-14 text-red-500 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-gray-800 mb-3">Erreur de chargement</h2>
+        <p className="text-gray-500 mb-6 text-sm">{error}</p>
+        <button onClick={() => fetchData(anneeScolaire)}
+          className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition">
+          Réessayer
+        </button>
       </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
-        <div className="flex items-center space-x-2 text-xl text-indigo-600">
-          <svg className="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Chargement des données...</span>
-        </div>
-      </div>
-    );
-  }
-
-  const { totals, demographics, charts, dailyTotals } = dashboardData;
-
-  const statsCards = [
-    {title: "Total Apprenants", icon: FaUsers, value: totals.general, color:'text-indigo-600', bg: 'bg-indigo-50' },
-    {title: "Total Académiques", icon: FaUserGraduate, value: totals.eleve, color:'text-green-600', bg: 'bg-green-50' },
-    {title: "Total Professionnel", icon: FaChalkboardTeacher, value: totals.formation, color:'text-yellow-600', bg: 'bg-yellow-50' },
-    {title: "Paiements Effectué(s)", icon: FaMoneyCheckAlt, value: totals.paiement, color:'text-cyan-600', bg: 'bg-cyan-50' },
-  ];
-
-  const demographicCards = [
-    {title: "Mineur(s)", icon: FaChild, value: demographics.mineurs, color:'text-red-500', bg: 'bg-red-50' },
-    {title: "Majeur(s)", icon: FaUserTie, value: demographics.majeurs, color:'text-teal-500', bg: 'bg-teal-50' },
-  ];
-
-  // Composant pour les graphiques vides
-  const EmptyChart = ({ message }) => (
-    <div className="flex flex-col items-center text-center justify-center h-64 text-gray-500">
-      <FaExclamationTriangle className="w-12 h-12 mb-2" />
-      <p className="text-center">{message}</p>
     </div>
   );
 
+  const { totals, demographics, charts, dailyTotals, today } = dashboardData || {};
+
+  /* ── KPI cards config ── */
+  const statsCards = [
+    { title: "Total Inscrits",       icon: FaUsers,            value: totals?.general,   color: 'text-indigo-600', bg: 'bg-indigo-50',  border: 'border-indigo-400' },
+    { title: "Académiques",          icon: FaUserGraduate,     value: totals?.eleve,     color: 'text-green-600',  bg: 'bg-green-50',   border: 'border-green-400' },
+    { title: "Professionnel",        icon: FaChalkboardTeacher,value: totals?.formation, color: 'text-yellow-600', bg: 'bg-yellow-50',  border: 'border-yellow-400' },
+    { title: "Nb Paiements",         icon: FaMoneyCheckAlt,    value: totals?.paiement,  color: 'text-cyan-600',   bg: 'bg-cyan-50',    border: 'border-cyan-400' },
+    { title: "Mineur(s)",            icon: FaChild,            value: demographics?.mineurs, color: 'text-red-500',  bg: 'bg-red-50',   border: 'border-red-400' },
+    { title: "Majeur(s)",            icon: FaUserTie,          value: demographics?.majeurs, color: 'text-teal-500', bg: 'bg-teal-50',  border: 'border-teal-400' },
+  ];
+
   return (
-    <div className="min-h-screen font-sans p-4 sm:p-6 lg:p-8">
-      
-      {/* Header and Action Button */}
-      <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 p-4 rounded-xl shadow-md">
+    <div className="min-h-screen bg-gray-50 font-sans p-4 sm:p-6 lg:p-8">
+
+      {/* ── Header ── */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
-          <FaList className="w-7 h-7 text-indigo-600" />
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Tableau de bord Général</h1>
-        </div>
-        <button 
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-[1.02] active:scale-95"
-          onClick={autre} 
-        >
-          Autre Pages <FaArrowRight />
-        </button>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
-        {[...statsCards, ...demographicCards].map((item, idx) => (
-          <div 
-            key={idx} 
-            className={`${item.bg} rounded-2xl shadow-xl p-5 flex flex-col justify-between border-l-4 ${item.color.replace('text', 'border')} transition duration-300 hover:shadow-2xl`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg text-center font-bold text-gray-600 leading-snug">{item.title}</h3>
-              <item.icon className={`w-6 h-6 ${item.color}`} />
-            </div>
-            <p className={`text-3xl font-extrabold text-center ${item.color}`}>
-              {item.title.includes('Paiements') 
-                ? `${formatAriary(item.value)}`
-                : <CountUp end={item.value} duration={1.5} separator=" " />
-              }
-            </p>
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow">
+            <FaList className="text-white" size={16} />
           </div>
-        ))}
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Chart 1: Répartition par Âge */}
-        <div className="rounded-2xl shadow-xl p-6 lg:col-span-1 transition duration-300 hover:shadow-2xl">
-          <h2 className="text-xl font-bold mb-4 border-b pb-2 text-center">
-            Répartition par Âge
-          </h2>
-          <ResponsiveContainer width="100%" height={500}>
-            {charts.ageData.length > 0 ? (
-              <PieChart>
-                <Pie data={charts.ageData} dataKey="total" nameKey="categorie" cx="50%" cy="50%" 
-                  outerRadius={150} innerRadius={60} paddingAngle={4} label={({ categorie, pourcentage }) => `${pourcentage}%`} labelLine={false}
-                >
-                  {charts.ageData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px' }}/>
-              </PieChart>
-            ) : (
-              <EmptyChart message="Aucune donnée d'âge disponible" />
+          <div>
+            <h1 className="text-2xl font-extrabold text-gray-800 leading-tight">Tableau de bord Général</h1>
+            {labelAS && (
+              <p className="text-xs text-indigo-600 font-semibold mt-0.5 flex items-center gap-1">
+                <FaCalendarAlt size={10} /> Année scolaire {labelAS}
+              </p>
             )}
-          </ResponsiveContainer>
-        </div>
-        
-        {/* Chart 2: Répartition par Sexe */}
-        <div className="rounded-2xl shadow-xl p-6 lg:col-span-1 transition duration-300 hover:shadow-2xl">
-          <h2 className="text-xl font-bold mb-4 border-b pb-2 text-center">
-            Répartition par Sexe
-          </h2>
-          <ResponsiveContainer width="100%" height={500}>
-            {charts.sexeData.length > 0 ? (
-              <PieChart>
-                <Pie data={charts.sexeData} dataKey="value" nameKey="name" cx="50%" cy="50%" 
-                  outerRadius={150} innerRadius={60} paddingAngle={4} labelLine={false} label
-                >
-                  {charts.sexeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={GENDER_COLORS[index % GENDER_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => [`${formatAriary(value)} Apprenants`, "Total"]}
-                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 10 }}
-                />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px' }}/>
-              </PieChart>
-            ) : (
-              <EmptyChart message="Aucune donnée de sexe disponible" />
-            )}
-          </ResponsiveContainer>
+          </div>
         </div>
 
-        {/* Chart 3: Paiements par Mois */}
-        <div className="rounded-2xl shadow-xl p-6 lg:col-span-1 transition duration-300 hover:shadow-2xl">
-          <h2 className="text-xl font-bold mb-4 border-b pb-2 text-center">
-            Recette par mois
-          </h2>
-          <ResponsiveContainer width="100%" height={500}>
-            {charts.paiementsMois.length > 0 ? (
-              <PieChart>
-                <Pie data={charts.paiementsMois} dataKey="montant" nameKey="mois" cx="50%" cy="50%" 
-                  outerRadius={150} innerRadius={60} paddingAngle={4} labelLine={false} label={({ montant }) => formatAriary(montant)}
-                >
-                  {charts.paiementsMois.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS_PRIMARY[index % CHART_COLORS_PRIMARY.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => [`${formatAriary(value)} Ar`, "Montant Total"]}
-                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 10 }}
-                />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px' }}/>
-              </PieChart>
-            ) : (
-              <EmptyChart message="Aucune donnée de paiement disponible" />
-            )}
-          </ResponsiveContainer>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Sélecteur d'année scolaire */}
+          <div className="relative">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+              <FaCalendarAlt className="text-indigo-500" size={13} />
+              <select
+                value={anneeScolaire}
+                onChange={(e) => setAnneeScolaire(e.target.value)}
+                className="appearance-none bg-transparent text-sm font-semibold text-gray-700 outline-none cursor-pointer pr-6"
+              >
+                <option value="">Année en cours</option>
+                {anneesDispos.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+              <FaChevronDown className="text-gray-400 absolute right-3 pointer-events-none" size={11} />
+            </div>
+          </div>
+
+          {/* Rafraîchir */}
+          <button onClick={() => fetchData(anneeScolaire)}
+            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl shadow-sm hover:bg-gray-50 transition text-sm font-semibold"
+          >
+            <FaSync size={12} /> Actualiser
+          </button>
+
+          {/* Autre pages */}
+          <button onClick={autre}
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 transition text-sm"
+          >
+            Autres pages <FaArrowRight size={12} />
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <div className="rounded-2xl shadow-xl p-6 transition duration-300 hover:shadow-2xl">
-          <h2 className="text-xl font-bold mb-4 border-b pb-2 text-center">
-            Recette (4 Dernières Semaines)
-          </h2>
-          <ResponsiveContainer width="100%" height={400}>
-            {charts.paiementsSemaine.length > 0 ? (
-              <BarChart data={charts.paiementsSemaine} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                <XAxis dataKey="semaine" stroke="#6b7280" />
-                <YAxis 
-                  stroke="#6b7280" 
-                  tickFormatter={(value) => `${formatAriary(value)} Ar`}
-                  domain={['dataMin - 10000', 'dataMax + 10000']}
-                />
-                <Tooltip 
-                  content={<CustomTooltip unit="Ar" />}
-                  labelFormatter={(label) => `Semaine : ${label}`}
-                />
-                <Legend />
-                <Bar dataKey="montant" name="Montant" maxBarSize={60} radius={[8, 8, 0, 0]} animationDuration={1500}
-                  label={{ 
-                    position: 'top', 
-                    formatter: (value) => formatAriary(value),
-                    fill: "#4f46e5", 
-                    fontSize: 12, 
-                    fontWeight: 'bold' 
-                  }}
-                >
-                  {charts.paiementsSemaine.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={SECONDARY_COLOR} />
-                  ))}
-                </Bar>
-              </BarChart>
-            ) : (
-              <EmptyChart message="Aucune donnée de paiement hebdomadaire disponible" />
-            )}
-          </ResponsiveContainer>
+      {/* ── Bandeau "aujourd'hui" ── */}
+      <div className="bg-indigo-600 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-2 text-white font-bold text-sm">
+          <FaCalendarDay size={15} />
+          Inscriptions aujourd'hui
         </div>
+        <div className="flex items-center gap-6 text-white text-sm font-semibold">
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">{loading ? '…' : today?.total}</p>
+            <p className="text-indigo-200 text-xs">Total</p>
+          </div>
+          <div className="w-px h-8 bg-white/30" />
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">{loading ? '…' : today?.cfp}</p>
+            <p className="text-indigo-200 text-xs">CFP</p>
+          </div>
+          <div className="w-px h-8 bg-white/30" />
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">{loading ? '…' : today?.lycee}</p>
+            <p className="text-indigo-200 text-xs">Lycée</p>
+          </div>
+          <div className="w-px h-8 bg-white/30" />
+          <div className="text-center">
+            <p className="text-lg font-extrabold">{loading ? '…' : `${formatAriary(totals?.montant)} Ar`}</p>
+            <p className="text-indigo-200 text-xs">Recette totale (AS)</p>
+          </div>
+        </div>
+      </div>
 
-        <div className="rounded-2xl shadow-xl p-6 transition duration-300">
-          <h2 className="text-xl font-bold mb-4 border-b pb-2 text-center flex items-center justify-center gap-2">
-            <FaCalendarDay className="text-indigo-600" />Nombre des inscrits chaque jour
-          </h2>
-          {dailyTotals.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={dailyTotals} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="jour" stroke="#6b7280" tick={{ fontSize: 12 }} />
-                  <YAxis stroke="#6b7280" allowDecimals={false} tick={{ fontSize: 12 }} />
-                  <Tooltip
-                    formatter={(value, name) => {
-                      if (name === "total") return [`${value} inscrits`, "Total"];
-                      if (name === "cfp") return [`${value}`, "CFP"];
-                      if (name === "lycee") return [`${value}`, "Lycée"];
-                      return [value, name];
-                    }}
-                    labelFormatter={(label) => `Jour : ${label}`}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke={SECONDARY_COLOR}
-                    strokeWidth={3}
-                    fill={SECONDARY_COLOR}
-                    fillOpacity={0.3}
-                    dot={{ r: 5, fill: SECONDARY_COLOR, stroke: 'white', strokeWidth: 2 }}
-                    activeDot={{ r: 7 }}
-                  />
-                  <Area type="monotone" dataKey="cfp" stroke="#10B981" fill="none" strokeWidth={2} dot={{ r: 3 }} /> 
-                  <Area type="monotone" dataKey="lycee" stroke="#F59E0B" fill="none" strokeWidth={2} dot={{ r: 3 }} />
-                </AreaChart>
-              </ResponsiveContainer>
-              <div className="border-t pt-2 mt-2 flex justify-between font-bold text-indigo-700">
-                <span>Total dans une semaine</span>
-                <span>{dailyTotals.reduce((acc, d) => acc + d.total, 0)}</span>
+      {/* ── KPI Cards ── */}
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          {Array(6).fill(0).map((_, i) => <Skeleton key={i} h="h-28" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          {statsCards.map((item, idx) => (
+            <div key={idx}
+              className={`${item.bg} rounded-2xl p-4 flex flex-col justify-between border-l-4 ${item.border} shadow hover:shadow-md transition`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-bold text-gray-500 leading-tight">{item.title}</h3>
+                <item.icon className={`${item.color} flex-shrink-0`} size={18} />
               </div>
-            </>
-          ) : (
-            <EmptyChart message="Aucune inscription cette semaine" />
-          )}
+              <p className={`text-2xl font-extrabold text-center ${item.color}`}>
+                <CountUp end={item.value ?? 0} duration={1.5} separator=" " />
+              </p>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* ── Graphiques ligne 1 ── */}
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {Array(3).fill(0).map((_, i) => <Skeleton key={i} h="h-80" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+          {/* Pie Âge */}
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
+              <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Répartition par Âge
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              {charts.ageData.length > 0 ? (
+                <PieChart>
+                  <Pie data={charts.ageData} dataKey="total" nameKey="categorie"
+                    cx="50%" cy="50%" outerRadius={100} innerRadius={50} paddingAngle={4}
+                    label={({ pourcentage }) => `${pourcentage}%`} labelLine={false}
+                  >
+                    {charts.ageData.map((_, i) => <Cell key={i} fill={AGE_COLORS[i % AGE_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend wrapperStyle={{ paddingTop: 16, fontSize: 12 }} />
+                </PieChart>
+              ) : <EmptyChart message="Aucune donnée d'âge disponible" />}
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pie Sexe */}
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
+              <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Répartition par Sexe
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              {charts.sexeData.length > 0 ? (
+                <PieChart>
+                  <Pie data={charts.sexeData} dataKey="value" nameKey="name"
+                    cx="50%" cy="50%" outerRadius={100} innerRadius={50} paddingAngle={4} label labelLine={false}
+                  >
+                    {charts.sexeData.map((_, i) => <Cell key={i} fill={GENDER_COLORS[i % GENDER_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip formatter={(v) => [`${formatAriary(v)} Apprenants`, "Total"]}
+                    contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                  <Legend wrapperStyle={{ paddingTop: 16, fontSize: 12 }} />
+                </PieChart>
+              ) : <EmptyChart message="Aucune donnée disponible" />}
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pie Recette par mois */}
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
+              <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Recette par mois
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              {charts.paiementsMois.length > 0 ? (
+                <PieChart>
+                  <Pie data={charts.paiementsMois} dataKey="montant" nameKey="mois"
+                    cx="50%" cy="50%" outerRadius={100} innerRadius={50} paddingAngle={4} labelLine={false}
+                    label={({ montant }) => `${formatAriary(montant)}`}
+                  >
+                    {charts.paiementsMois.map((_, i) => <Cell key={i} fill={MONTH_COLORS[i % MONTH_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip formatter={(v) => [`${formatAriary(v)} Ar`, "Montant"]}
+                    contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                  <Legend wrapperStyle={{ paddingTop: 16, fontSize: 12 }} />
+                </PieChart>
+              ) : <EmptyChart message="Aucune donnée de paiement disponible" />}
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* ── Graphiques ligne 2 ── */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <Skeleton h="h-80" /> <Skeleton h="h-80" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+          {/* BarChart recette 4 semaines */}
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
+              <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Recette (4 dernières semaines)
+            </h2>
+            <ResponsiveContainer width="100%" height={320}>
+              {charts.paiementsSemaine.length > 0 ? (
+                <BarChart data={charts.paiementsSemaine} margin={{ top: 20, right: 20, left: 0, bottom: 5 }} barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis dataKey="semaine" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                  <YAxis stroke="#9ca3af" tick={{ fontSize: 11 }} tickFormatter={(v) => `${formatAriary(v)}`} />
+                  <Tooltip content={<CustomTooltip unit="Ar" />} labelFormatter={(l) => `Semaine : ${l}`} />
+                  <Bar dataKey="montant" name="Montant" maxBarSize={55} radius={[8, 8, 0, 0]} animationDuration={1200}
+                    label={{ position: 'top', formatter: (v) => formatAriary(v), fill: '#4f46e5', fontSize: 11, fontWeight: 'bold' }}
+                  >
+                    {charts.paiementsSemaine.map((_, i) => <Cell key={i} fill={SECONDARY_COLOR} />)}
+                  </Bar>
+                </BarChart>
+              ) : <EmptyChart message="Aucune donnée hebdomadaire" />}
+            </ResponsiveContainer>
+          </div>
+
+          {/* Area chart inscriptions semaine courante */}
+          <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+            <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
+              <span className="w-1 h-4 bg-indigo-600 rounded-full" />
+              <FaCalendarDay className="text-indigo-600" size={13} /> Inscrits cette semaine
+            </h2>
+            {dailyTotals.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={265}>
+                  <AreaChart data={dailyTotals} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="jour" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                    <YAxis stroke="#9ca3af" allowDecimals={false} tick={{ fontSize: 11 }} />
+                    <Tooltip
+                      formatter={(v, n) => {
+                        if (n === "total") return [`${v} inscrits`, "Total"];
+                        if (n === "cfp")   return [`${v}`, "CFP"];
+                        if (n === "lycee") return [`${v}`, "Lycée"];
+                        return [v, n];
+                      }}
+                      labelFormatter={(l) => `Jour : ${l}`}
+                      contentStyle={{ borderRadius: 10, fontSize: 12 }}
+                    />
+                    <Area type="monotone" dataKey="total" stroke={SECONDARY_COLOR} strokeWidth={3}
+                      fill={SECONDARY_COLOR} fillOpacity={0.15}
+                      dot={{ r: 5, fill: SECONDARY_COLOR, stroke: 'white', strokeWidth: 2 }} activeDot={{ r: 7 }}
+                    />
+                    <Area type="monotone" dataKey="cfp"   stroke="#10B981" fill="none" strokeWidth={2} dot={{ r: 3 }} />
+                    <Area type="monotone" dataKey="lycee" stroke="#F59E0B" fill="none" strokeWidth={2} dot={{ r: 3 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+                <div className="border-t pt-2 mt-1 flex justify-between text-sm font-bold text-indigo-700">
+                  <span>Total semaine</span>
+                  <span>{dailyTotals.reduce((a, d) => a + d.total, 0)}</span>
+                </div>
+              </>
+            ) : <EmptyChart message="Aucune inscription cette semaine" />}
+          </div>
+        </div>
+      )}
+
+      {/* ── Nouveau : Inscriptions par mois (année scolaire) ── */}
+      {loading ? (
+        <Skeleton h="h-72" />
+      ) : (
+        <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition">
+          <div className="flex items-center justify-between border-b pb-3 mb-4">
+            <h2 className="text-base font-bold text-gray-700 flex items-center gap-2">
+              <span className="w-1 h-4 bg-indigo-600 rounded-full" />
+              Inscriptions par mois — Année scolaire {labelAS}
+            </h2>
+            <span className="text-xs bg-indigo-50 text-indigo-600 font-semibold px-3 py-1 rounded-full">
+              {charts.inscriptionsParMois.reduce((a, m) => a + m.total, 0)} au total
+            </span>
+          </div>
+          {charts.inscriptionsParMois.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={charts.inscriptionsParMois} margin={{ top: 16, right: 16, left: 0, bottom: 8 }} barCategoryGap="25%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="mois" stroke="#9ca3af" tick={{ fontSize: 11 }}
+                  tickFormatter={(v) => v.slice(0, 3)} />
+                <YAxis stroke="#9ca3af" allowDecimals={false} tick={{ fontSize: 11 }} />
+                <Tooltip
+                  formatter={(v, n) => {
+                    if (n === "total") return [`${v}`, "Total"];
+                    if (n === "cfp")   return [`${v}`, "CFP"];
+                    if (n === "lycee") return [`${v}`, "Lycée"];
+                    return [v, n];
+                  }}
+                  labelFormatter={(l) => `Mois : ${l}`}
+                  contentStyle={{ borderRadius: 10, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="total" name="Total"  fill={SECONDARY_COLOR} radius={[6,6,0,0]} maxBarSize={40} />
+                <Bar dataKey="cfp"   name="CFP"    fill="#10B981"         radius={[6,6,0,0]} maxBarSize={40} />
+                <Bar dataKey="lycee" name="Lycée"  fill="#F59E0B"         radius={[6,6,0,0]} maxBarSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <EmptyChart message={`Aucune inscription pour l'année scolaire ${labelAS}`} />}
+        </div>
+      )}
+
     </div>
   );
 }
