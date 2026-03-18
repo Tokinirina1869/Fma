@@ -44,6 +44,7 @@ Route::get('/niveaux/list', [InscriptionController::class, 'getNiveauxList']);
 
 // Dans routes/api.php
 Route::get('/dashboard/global-stats', [DashController::class, 'getGlobalStats']);
+
 //Niveau 
 Route::get('/niveau', [ControllerNiveau::class, 'index']);
 Route::post('/niveaux', [ControllerNiveau::class, 'store']);

@@ -10,6 +10,7 @@ use App\Models\FormationModel;
 use App\Models\Parcours;
 use App\Models\Suivre;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class InscriptionCompleteController extends Controller
 {
@@ -270,109 +271,217 @@ class InscriptionCompleteController extends Controller
 
 
 
-    public function getDashboardData()
+    private function getAnneeScolaireRange(?string $anneeScolaire = null): array
     {
-        // 1. Effectifs trimestriels (remplace formations/trimestre)
-        $trimestreData = DB::table('inscriptions as i')
-            ->join('inscrit_formations as inf', 'i.no_inscrit', '=', 'inf.no_inscrit')
-            ->select(
-                DB::raw("EXTRACT(YEAR FROM i.dateinscrit)::int AS annee"),
-                DB::raw("
-                    CASE 
-                        WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 9 AND 12 THEN 'T1'
-                        WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 1 AND 3 THEN 'T2'
-                        WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 4 AND 7 THEN 'T3'
-                        ELSE 'Hors'
-                    END AS trimestre
-                "),
-                DB::raw("COUNT(i.no_inscrit) AS total")
-            )
-            ->groupBy('annee', 'trimestre')
-            ->orderBy('annee', 'asc')
-            ->orderBy('trimestre', 'asc')
-            ->get();
-
-        // 2. Total des inscriptions (remplace inscriptions/count)
-        $totalInscriptions = DB::table('inscrit_formations')->count();
-
-        // 3. Comptage par formation (remplace count-all-formations)
-        $formations = [
-            'musique' => '%Musique%',
-            'informatique' => '%Informatique%',
-            'coupe_couture' => '%Coupe et Couture%',
-            'langues' => '%Langue%',
-            'patisserie' => '%Pâtisserie%'
-        ];
-    
-        $formationCounts = [];
-        foreach ($formations as $key => $pattern) {
-            $formationCounts[$key] = DB::table('inscriptions as i')
-                ->join('inscrit_formations as insc', 'i.no_inscrit', '=', 'insc.no_inscrit')
-                ->join('suivres as s', 's.no_inscrit', '=', 'insc.no_inscrit')
-                ->join('parcours as p', 'p.code_formation', '=', 's.code_formation')
-                ->where('p.nomformation', 'LIKE', $pattern)
-                ->count();
+        if ($anneeScolaire) {
+            [$debut, $fin] = explode('-', $anneeScolaire);
+            $start = Carbon::createFromDate((int) $debut, 9, 1)->startOfDay();
+            $end   = Carbon::createFromDate((int) $fin,   8, 31)->endOfDay();
+            $label = $anneeScolaire;
+        } else {
+            $now        = Carbon::now();
+            $debutAnnee = $now->month >= 9 ? $now->year : $now->year - 1;
+            $finAnnee   = $debutAnnee + 1;
+            $start = Carbon::createFromDate($debutAnnee, 9, 1)->startOfDay();
+            $end   = Carbon::createFromDate($finAnnee,   8, 31)->endOfDay();
+            $label = "$debutAnnee-$finAnnee";
         }
-
-        // 4. Formation la plus suivie (remplace inscriptions/topParcours)
-        $topFormation = DB::table('inscrit_formations as insc')
-            ->join('suivres as s', 'insc.no_inscrit', '=', 's.no_inscrit')
-            ->join('parcours as p', 'p.code_formation', '=', 's.code_formation')
-            ->select('p.nomformation', DB::raw('COUNT(insc.no_inscrit) as total'))
-            ->groupBy('p.nomformation')
-            ->orderByDesc('total')
-            ->limit(1)
-            ->first();  
-
-        // 5. Effectifs par formation (remplace formations/effectifs)
-        $effectifsFormation = DB::table('inscrit_formations as if')
-            ->join('suivres as s', 'if.no_inscrit', '=', 's.no_inscrit')
-            ->join('parcours as p', 's.code_formation', '=', 'p.code_formation')
-            ->select(
-                'p.nomformation as name',
-                DB::raw('COUNT(if.no_inscrit) as value')
+ 
+        return ['debut' => $start, 'fin' => $end, 'label' => $label];
+    }
+ 
+    /**
+     * Liste des années scolaires disponibles dans la base.
+     */
+    private function getAnneesDisponibles(): array
+    {
+        $annees = DB::table('inscriptions')
+            ->selectRaw("EXTRACT(YEAR FROM dateinscrit)::int AS annee")
+            ->groupByRaw("EXTRACT(YEAR FROM dateinscrit)")
+            ->orderByRaw("EXTRACT(YEAR FROM dateinscrit)")
+            ->pluck('annee')
+            ->map(fn($y) => "$y-" . ($y + 1))
+            ->toArray();
+ 
+        return array_values(array_unique($annees));
+    }
+ 
+    /**
+     * GET /api/dashboard/formation-stats?annee_scolaire=2024-2025
+     */
+    public function getDashboardData(Request $request)
+    {
+        try {
+            // ── Résolution de l'année scolaire ──────────────────────────────
+            $as     = $this->getAnneeScolaireRange($request->query('annee_scolaire'));
+            $debut  = $as['debut'];
+            $fin    = $as['fin'];
+            $label  = $as['label'];
+ 
+            // ── 1. Effectifs trimestriels (filtrés par AS) ──────────────────
+            //   Trimestres selon le calendrier scolaire malgache :
+            //   T1 = sept–déc  |  T2 = jan–mars  |  T3 = avr–juil
+            $trimestreData = DB::table('inscriptions as i')
+                ->join('inscrit_formations as inf', 'i.no_inscrit', '=', 'inf.no_inscrit')
+                ->select(
+                    DB::raw("EXTRACT(YEAR FROM i.dateinscrit)::int AS annee"),
+                    DB::raw("
+                        CASE
+                            WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 9  AND 12 THEN 'T1'
+                            WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 1  AND 3  THEN 'T2'
+                            WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 4  AND 7  THEN 'T3'
+                            ELSE 'Hors'
+                        END AS trimestre
+                    "),
+                    DB::raw("COUNT(i.no_inscrit) AS total")
                 )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->groupBy('annee', 'trimestre')
+                ->orderBy('annee')
+                ->orderBy('trimestre')
+                ->get();
+ 
+            // ── 2. Total des inscriptions (AS) ──────────────────────────────
+            $totalInscriptions = DB::table('inscrit_formations as inf')
+                ->join('inscriptions as i', 'i.no_inscrit', '=', 'inf.no_inscrit')
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->count();
+ 
+            // ── 3. Comptage par formation (AS) ──────────────────────────────
+            $formations = [
+                'musique'       => '%Musique%',
+                'informatique'  => '%Informatique%',
+                'coupe_couture' => '%Coupe et Couture%',
+                'langues'       => '%Langue%',
+                'patisserie'    => '%Pâtisserie%',
+            ];
+ 
+            $formationCounts = [];
+            foreach ($formations as $key => $pattern) {
+                $formationCounts[$key] = DB::table('inscriptions as i')
+                    ->join('inscrit_formations as insc', 'i.no_inscrit', '=', 'insc.no_inscrit')
+                    ->join('suivres as s',  's.no_inscrit',      '=', 'insc.no_inscrit')
+                    ->join('parcours as p', 'p.code_formation',  '=', 's.code_formation')
+                    ->where('p.nomformation', 'LIKE', $pattern)
+                    ->whereBetween('i.dateinscrit', [$debut, $fin])
+                    ->count();
+            }
+ 
+            // ── 4. Formation la plus suivie (AS) ────────────────────────────
+            $topFormation = DB::table('inscrit_formations as insc')
+                ->join('inscriptions as i', 'i.no_inscrit',     '=', 'insc.no_inscrit')
+                ->join('suivres as s',       'insc.no_inscrit', '=', 's.no_inscrit')
+                ->join('parcours as p',      'p.code_formation','=', 's.code_formation')
+                ->select('p.nomformation', DB::raw('COUNT(insc.no_inscrit) as total'))
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->groupBy('p.nomformation')
+                ->orderByDesc('total')
+                ->limit(1)
+                ->first();
+ 
+            // ── 5. Effectifs par formation (AS) ─────────────────────────────
+            $effectifsFormation = DB::table('inscrit_formations as inf')
+                ->join('inscriptions as i', 'i.no_inscrit',     '=', 'inf.no_inscrit')
+                ->join('suivres as s',       'inf.no_inscrit',  '=', 's.no_inscrit')
+                ->join('parcours as p',      's.code_formation','=', 'p.code_formation')
+                ->select(
+                    'p.nomformation as name',
+                    DB::raw('COUNT(inf.no_inscrit) as value')
+                )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
                 ->groupBy('p.nomformation')
                 ->orderByDesc('value')
                 ->get();
-
-        // 6. Répartition par sexe (remplace FormationParSexe)
-        $repartitionSexe = DB::table('personnes as p')
-            ->join('inscriptions as i', 'p.matricule', '=', 'i.matricule')
-            ->select(
-                'p.sexe as name',
-                DB::raw('COUNT(DISTINCT i.no_inscrit) as value')
-            )
-            ->groupBy('p.sexe')
-            ->get();
-
-        // 7. Répartition mineur/majeur (remplace CfpMineurMajeur)
-        $repartitionAge = DB::table('personnes as p')
-            ->join('inscriptions as i', 'p.matricule', '=', 'i.matricule')
-            ->select(
-                DB::raw("CASE 
-                    WHEN EXTRACT(YEAR FROM AGE(p.naiss)) < 18 THEN 'Mineur' 
-                    ELSE 'Majeur' 
-                END as name"),
-                DB::raw('COUNT(DISTINCT i.no_inscrit) as value')
-            )
-            ->groupBy('name')
-            ->get();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'trimestre_data' => $trimestreData,
-                'total_inscriptions' => $totalInscriptions,
-                'formation_counts' => $formationCounts,
-                'top_formation' => $topFormation,
-                'effectifs_formation' => $effectifsFormation,
-                'repartition_sexe' => $repartitionSexe,
-                'repartition_age' => $repartitionAge
-            ]
-        ]);
+ 
+            // ── 6. Répartition par sexe (AS) ────────────────────────────────
+            $repartitionSexe = DB::table('personnes as p')
+                ->join('inscriptions as i', 'p.matricule', '=', 'i.matricule')
+                ->join('inscrit_formations as inf', 'i.no_inscrit', '=', 'inf.no_inscrit')
+                ->select(
+                    'p.sexe as name',
+                    DB::raw('COUNT(DISTINCT i.no_inscrit) as value')
+                )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->groupBy('p.sexe')
+                ->get()
+                ->map(fn($r) => [
+                    'name'  => $r->name === 'M' ? 'Masculin' : ($r->name === 'F' ? 'Féminin' : $r->name),
+                    'value' => (int) $r->value,
+                ]);
+ 
+            // ── 7. Répartition mineur / majeur (AS) ─────────────────────────
+            $repartitionAge = DB::table('personnes as p')
+                ->join('inscriptions as i', 'p.matricule', '=', 'i.matricule')
+                ->join('inscrit_formations as inf', 'i.no_inscrit', '=', 'inf.no_inscrit')
+                ->select(
+                    DB::raw("
+                        CASE
+                            WHEN EXTRACT(YEAR FROM AGE(p.naiss)) < 18 THEN 'Mineur'
+                            ELSE 'Majeur'
+                        END as name
+                    "),
+                    DB::raw('COUNT(DISTINCT i.no_inscrit) as value')
+                )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->groupBy('name')
+                ->get()
+                ->map(fn($r) => [
+                    'name'  => $r->name,
+                    'value' => (int) $r->value,
+                ]);
+ 
+            // ── 8. Évolution mensuelle des inscriptions (AS) — nouveau ──────
+            $evolutionMensuelle = DB::table('inscriptions as i')
+                ->join('inscrit_formations as inf', 'i.no_inscrit', '=', 'inf.no_inscrit')
+                ->select(
+                    DB::raw("TO_CHAR(DATE_TRUNC('month', i.dateinscrit), 'Month YYYY') as mois"),
+                    DB::raw("DATE_TRUNC('month', i.dateinscrit) as mois_date"),
+                    DB::raw("COUNT(i.no_inscrit) as total")
+                )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->groupBy(
+                    DB::raw("DATE_TRUNC('month', i.dateinscrit)"),
+                    DB::raw("TO_CHAR(DATE_TRUNC('month', i.dateinscrit), 'Month YYYY')")
+                )
+                ->orderBy(DB::raw("DATE_TRUNC('month', i.dateinscrit)"))
+                ->get()
+                ->map(fn($r) => [
+                    'mois'  => trim($r->mois),
+                    'total' => (int) $r->total,
+                ]);
+ 
+            // ── Réponse ──────────────────────────────────────────────────────
+            return response()->json([
+                'status' => 'success',
+                'data'   => [
+                    // Contexte de l'année scolaire
+                    'annee_scolaire' => [
+                        'label' => $label,
+                        'debut' => $debut->toDateString(),
+                        'fin'   => $fin->toDateString(),
+                    ],
+                    'annees_disponibles' => $this->getAnneesDisponibles(),
+ 
+                    // Données filtrées
+                    'trimestre_data'      => $trimestreData,
+                    'total_inscriptions'  => $totalInscriptions,
+                    'formation_counts'    => $formationCounts,
+                    'top_formation'       => $topFormation,
+                    'effectifs_formation' => $effectifsFormation,
+                    'repartition_sexe'    => $repartitionSexe,
+                    'repartition_age'     => $repartitionAge,
+                    'evolution_mensuelle' => $evolutionMensuelle, // nouveau
+                ],
+            ]);
+ 
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Erreur lors du chargement des statistiques de formation',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
-
 
     public function getParcours()
     {

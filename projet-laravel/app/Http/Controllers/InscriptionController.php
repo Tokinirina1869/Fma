@@ -10,6 +10,7 @@ use App\Models\InscriptionAcademie;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class InscriptionController extends Controller
 {
@@ -146,86 +147,183 @@ class InscriptionController extends Controller
         ]);
     }
 
-
-    public function getDashboardStats()
+    private function getAnneeScolaireRange(?string $anneeScolaire = null): array
+    {
+        if ($anneeScolaire) {
+            [$debut, $fin] = explode('-', $anneeScolaire);
+            $start = Carbon::createFromDate((int) $debut, 9, 1)->startOfDay();
+            $end   = Carbon::createFromDate((int) $fin,   8, 31)->endOfDay();
+            $label = $anneeScolaire;
+        } else {
+            $now        = Carbon::now();
+            $debutAnnee = $now->month >= 9 ? $now->year : $now->year - 1;
+            $finAnnee   = $debutAnnee + 1;
+            $start = Carbon::createFromDate($debutAnnee, 9, 1)->startOfDay();
+            $end   = Carbon::createFromDate($finAnnee,   8, 31)->endOfDay();
+            $label = "$debutAnnee-$finAnnee";
+        }
+ 
+        return ['debut' => $start, 'fin' => $end, 'label' => $label];
+    }
+ 
+    /**
+     * Liste des années scolaires disponibles dans la base (depuis inscriptions).
+     */
+    private function getAnneesDisponibles(): array
+    {
+        $annees = DB::table('inscriptions')
+            ->selectRaw("EXTRACT(YEAR FROM dateinscrit)::int AS annee")
+            ->groupByRaw("EXTRACT(YEAR FROM dateinscrit)")
+            ->orderByRaw("EXTRACT(YEAR FROM dateinscrit)")
+            ->pluck('annee')
+            ->map(fn($y) => "$y-" . ($y + 1))
+            ->toArray();
+ 
+        return array_values(array_unique($annees));
+    }
+ 
+    /**
+     * GET /api/dashboard/academie-stats
+     * GET /api/dashboard/academie-stats?annee_scolaire=2024-2025
+     */
+    public function getDashboardStats(Request $request)
     {
         try {
-            // 1. Total général des inscriptions académiques
-          
-            $totalInscriptions = InscriptionAcademie::count();
-
-            // 2. Comptage par niveau (remplace les 5 fonctions individuelles)
+            // ── Résolution de l'année scolaire ──────────────────────────────
+            $as    = $this->getAnneeScolaireRange($request->query('annee_scolaire'));
+            $debut = $as['debut'];
+            $fin   = $as['fin'];
+            $label = $as['label'];
+ 
+            // ── 1. Total général des inscriptions académiques (filtré AS) ───
+            $totalInscriptions = DB::table('inscrit_academies as ia')
+                ->join('inscriptions as i', 'i.no_inscrit', '=', 'ia.no_inscrit')
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->count();
+ 
+            // ── 2. Comptage par niveau (filtré AS) ───────────────────────────
             $niveaux = [
-                'seconde' => '%Seconde %',
-                'premiere_l' => '%Première L%',
-                'premiere_s' => '%Première S%',
-                'terminal_l' => '%Terminale L%',
-                'terminal_s' => '%Terminale S%',
+                'seconde'     => '%Seconde %',
+                'premiere_l'  => '%Première L%',
+                'premiere_s'  => '%Première S%',
+                'terminal_l'  => '%Terminale L%',
+                'terminal_s'  => '%Terminale S%',
             ];
-            
+ 
             $niveauCounts = [];
             foreach ($niveaux as $key => $pattern) {
-                $niveauCounts[$key] = DB::table('inscrit_academies as insc')
-                    ->join('niveaux as niv', 'insc.code_niveau', '=', 'niv.code_niveau')
+                $niveauCounts[$key] = DB::table('inscrit_academies as ia')
+                    ->join('inscriptions as i',  'i.no_inscrit',   '=', 'ia.no_inscrit')
+                    ->join('niveaux as niv',      'ia.code_niveau', '=', 'niv.code_niveau')
                     ->where('niv.nomniveau', 'like', $pattern)
+                    ->whereBetween('i.dateinscrit', [$debut, $fin])
                     ->count();
             }
-
-            // 3. Effectifs par classe (pour graphique)
+ 
+            // ── 3. Effectifs par classe — graphique (filtré AS) ──────────────
             $effectifsClasse = DB::table('inscrit_academies as ia')
-                ->join('niveaux as niv', 'ia.code_niveau', '=', 'niv.code_niveau')
+                ->join('inscriptions as i',  'i.no_inscrit',   '=', 'ia.no_inscrit')
+                ->join('niveaux as niv',      'ia.code_niveau', '=', 'niv.code_niveau')
                 ->select(
                     'niv.nomniveau as name',
                     DB::raw('COUNT(ia.no_inscrit) as value')
                 )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
                 ->groupBy('niv.nomniveau')
                 ->orderByDesc('value')
                 ->get();
-
-            // 4. Effectifs par année scolaire
-            $effectifsAnnee = DB::table('inscriptions as i')
+ 
+            // ── 4. Évolution mensuelle des inscriptions académiques (AS) ─────
+            //    (remplace effectifsAnnee qui n'est plus pertinent par AS)
+            $evolutionMensuelle = DB::table('inscriptions as i')
                 ->join('inscrit_academies as ia', 'i.no_inscrit', '=', 'ia.no_inscrit')
                 ->select(
-                    'i.anneesco as annee',
+                    DB::raw("TO_CHAR(DATE_TRUNC('month', i.dateinscrit), 'Month YYYY') as mois"),
+                    DB::raw("DATE_TRUNC('month', i.dateinscrit) as mois_date"),
+                    DB::raw("COUNT(ia.no_inscrit) as total")
+                )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->groupBy(
+                    DB::raw("DATE_TRUNC('month', i.dateinscrit)"),
+                    DB::raw("TO_CHAR(DATE_TRUNC('month', i.dateinscrit), 'Month YYYY')")
+                )
+                ->orderBy(DB::raw("DATE_TRUNC('month', i.dateinscrit)"))
+                ->get()
+                ->map(fn($r) => [
+                    'mois'  => trim($r->mois),
+                    'total' => (int) $r->total,
+                ]);
+ 
+            // ── 5. Effectifs par trimestre académique (filtré AS) ─────────────
+            $effectifsTrimsestre = DB::table('inscriptions as i')
+                ->join('inscrit_academies as ia', 'i.no_inscrit', '=', 'ia.no_inscrit')
+                ->select(
+                    DB::raw("
+                        CASE
+                            WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 9  AND 12 THEN 'T1'
+                            WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 1  AND 3  THEN 'T2'
+                            WHEN EXTRACT(MONTH FROM i.dateinscrit) BETWEEN 4  AND 7  THEN 'T3'
+                            ELSE 'Hors'
+                        END AS trimestre
+                    "),
                     DB::raw('COUNT(ia.no_inscrit) as total')
                 )
-                ->groupBy('annee')
-                ->orderBy('annee', 'asc')
-                ->get();
-
-            // 5. Effectifs par formation (si besoin)
-            $effectifsFormation = DB::table('inscrit_formations as if')
-                ->join('suivres as s', 'if.no_inscrit', '=', 's.no_inscrit')
-                ->join('parcours as p', 's.code_formation', '=', 'p.code_formation')
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
+                ->groupBy('trimestre')
+                ->orderBy('trimestre')
+                ->get()
+                ->map(fn($r) => [
+                    'trimestre' => $r->trimestre,
+                    'total'     => (int) $r->total,
+                ]);
+ 
+            // ── 6. Effectifs par formation (non filtré AS — table séparée) ───
+            //    Conservé tel quel car inscrit_formations n'a pas de dateinscrit direct
+            $effectifsFormation = DB::table('inscrit_formations as inf')
+                ->join('inscriptions as i',  'i.no_inscrit',      '=', 'inf.no_inscrit')
+                ->join('suivres as s',        'inf.no_inscrit',    '=', 's.no_inscrit')
+                ->join('parcours as p',       's.code_formation',  '=', 'p.code_formation')
                 ->select(
                     'p.nomformation as name',
-                    DB::raw('COUNT(if.no_inscrit) as value')
+                    DB::raw('COUNT(inf.no_inscrit) as value')
                 )
+                ->whereBetween('i.dateinscrit', [$debut, $fin])
                 ->groupBy('p.nomformation')
                 ->orderByDesc('value')
                 ->get();
-
+ 
+            // ── Réponse ──────────────────────────────────────────────────────
             return response()->json([
                 'status' => 'success',
-                'data' => [
-                    'total_inscriptions' => $totalInscriptions,
-                    'niveau_counts' => $niveauCounts,
-                    'effectifs_classe' => $effectifsClasse,
-                    'effectifs_annee' => $effectifsAnnee,
+                'data'   => [
+                    // Contexte
+                    'annee_scolaire' => [
+                        'label' => $label,
+                        'debut' => $debut->toDateString(),
+                        'fin'   => $fin->toDateString(),
+                    ],
+                    'annees_disponibles' => $this->getAnneesDisponibles(),
+ 
+                    // Données filtrées par AS
+                    'total_inscriptions'  => $totalInscriptions,
+                    'niveau_counts'       => $niveauCounts,
+                    'effectifs_classe'    => $effectifsClasse,
+                    'effectifs_trimestre' => $effectifsTrimsestre,   // nouveau
+                    'evolution_mensuelle' => $evolutionMensuelle,    // nouveau
                     'effectifs_formation' => $effectifsFormation,
-                    'total_effectifs' => $effectifsClasse->sum('value')
-                ]
+                    'total_effectifs'     => $effectifsClasse->sum('value'),
+                ],
             ]);
-
+ 
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Erreur lors du chargement des statistiques',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
-
+    
     public function getNiveauxList()
     {
         try {
