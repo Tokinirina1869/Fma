@@ -70,7 +70,7 @@ const DashboardEleve = ({ onViewList }) => {
       const params = annee ? { annee_scolaire: annee } : {};
 
       const [dashRes, niveauxRes] = await Promise.allSettled([
-        axios.get(`${API_URL}/dashboard/academie-stats`, { params }),
+        axios.get(`${API_URL}/academie/dashboard-stats`, { params }),
         axios.get(`${API_URL}/niveaux/list`),
       ]);
 

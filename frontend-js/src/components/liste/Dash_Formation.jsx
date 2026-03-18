@@ -66,7 +66,7 @@ const DashboadFormation = ({ onViewListPro }) => {
       const params = annee ? { annee_scolaire: annee } : {};
 
       const [dashRes, parcoursRes] = await Promise.allSettled([
-        axios.get(`${API_URL}/dashboard/formation-stats`, { params }),
+        axios.get(`${API_URL}/dashboard/data`, { params }),
         axios.get(`${API_URL}/parcours/list`),
       ]);
 
