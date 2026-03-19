@@ -244,7 +244,7 @@ const DashboardEleve = ({ onViewList }) => {
 
   /* ── Sub-components ── */
   const ChartCard = ({ title, data, colors = PIE_COLORS }) => (
-    <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition border border-gray-100">
+    <div className="rounded-2xl shadow p-5 hover:shadow-md transition border border-gray-100">
       <h2 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
         <span className="w-1 h-4 rounded-full bg-indigo-600" /> {title}
       </h2>
@@ -446,7 +446,7 @@ const DashboardEleve = ({ onViewList }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
         {/* Évolution mensuelle */}
-        <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition border border-gray-100">
+        <div className="rounded-2xl shadow p-5 hover:shadow-md transition border border-gray-100">
           <h2 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
             <span className="w-1 h-4 rounded-full bg-indigo-600" />
             Évolution mensuelle — {labelAS}
@@ -469,7 +469,7 @@ const DashboardEleve = ({ onViewList }) => {
         </div>
 
         {/* Effectifs par trimestre */}
-        <div className="bg-white rounded-2xl shadow p-5 hover:shadow-md transition border border-gray-100">
+        <div className="rounded-2xl shadow p-5 hover:shadow-md transition border border-gray-100">
           <h2 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
             <span className="w-1 h-4 rounded-full bg-indigo-600" />
             Effectifs par trimestre — {labelAS}
