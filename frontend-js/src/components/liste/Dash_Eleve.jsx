@@ -92,24 +92,15 @@ const DashboardEleve = ({ onViewList }) => {
         setEvolutionMensuelle(d.evolution_mensuelle || []);
         setEffectifsTrimestre(d.effectifs_trimestre || []);
 
-        // setSexeData(d.repartition_sexe?.map(r => ({
-        //   name:  r.name === 'M' ? 'Masculin' : r.name === 'F' ? 'Féminin' : r.name,
-        //   value: Number(r.value),
-        // })) || []);
         const formattedSexe = [
           { name: "Masculin", value: Math.round(d.total_inscriptions * 0.55) || 0 },
-          { name: "Féminin", value: Math.round(d.total_inscriptions * 0.45) || 0 }
+          { name: "Féminin",  value: Math.round(d.total_inscriptions * 0.45) || 0 },
         ];
         setSexeData(formattedSexe);
-
-        // setAgeData(d.repartition_age?.map(r => ({
-        //   name:  r.name,
-        //   value: Number(r.value),
-        // })) || []);
-
+        
         const formattedMinMaj = [
           { name: "Mineur", value: Math.round(d.total_inscriptions * 0.65) || 0 },
-          { name: "Majeur", value: Math.round(d.total_inscriptions * 0.35) || 0 }
+          { name: "Majeur", value: Math.round(d.total_inscriptions * 0.35) || 0 },
         ];
         setAgeData(formattedMinMaj);
 
