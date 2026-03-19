@@ -5,7 +5,7 @@ import axios from 'axios';
 // ══════════════════════════════════════════════════════════════
 //  CONSTANTES
 // ══════════════════════════════════════════════════════════════
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = 'https://fma-inscription.onrender.com/api/';
 
 const CRITERIA = [
   { key: 'len',     test: p => p.length >= 8,                     label: '8 caractères minimum' },
