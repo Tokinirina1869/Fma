@@ -266,7 +266,7 @@ const NouvelleInscription = ({ show, handleClose, refreshList, searchEleve }) =>
   const generateAnnee = () => {
     const currentAnnee = new Date().getFullYear();
     const years = [];
-    for (let annee = currentAnnee + 1; annee >= 2020; annee--) { 
+    for (let annee = currentAnnee + 1; annee >= 2024; annee--) { 
       years.push(`${annee-1}-${annee}`);
     }
     return years.reverse(); 

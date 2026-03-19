@@ -274,7 +274,7 @@ function DashboardPage({ autre }) {
             <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Répartition par Sexe
             </h2>
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={320}>
               {charts.sexeData.length > 0 ? (
                 <PieChart>
                   <Pie data={charts.sexeData} dataKey="value" nameKey="name"
@@ -295,7 +295,7 @@ function DashboardPage({ autre }) {
             <h2 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2 border-b pb-3">
               <span className="w-1 h-4 bg-indigo-600 rounded-full" /> Recette par mois
             </h2>
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={320}>
               {charts.paiementsMois.length > 0 ? (
                 <PieChart>
                   <Pie data={charts.paiementsMois} dataKey="montant" nameKey="mois"

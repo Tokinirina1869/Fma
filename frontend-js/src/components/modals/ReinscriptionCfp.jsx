@@ -55,7 +55,7 @@ const ReinscriptionCfp = ({ show, handleclose, initialMatricule = '', onReinscri
   const generateAnnee = () => {
     const currentAnnee = new Date().getFullYear();
     const years = [];
-    for (let annee = 2020; annee <= currentAnnee; annee++) {
+    for (let annee = 2024; annee <= currentAnnee; annee++) {
       years.push(`${annee}-${annee + 1}`);
     }
     return years.reverse();
