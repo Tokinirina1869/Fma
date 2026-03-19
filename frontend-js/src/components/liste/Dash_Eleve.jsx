@@ -249,7 +249,7 @@ const DashboardEleve = ({ onViewList }) => {
         <span className="w-1 h-4 rounded-full bg-indigo-600" /> {title}
       </h2>
       {data?.length > 0 ? (
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={320}>
           <PieChart>
             <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%"
               outerRadius={100} innerRadius={48} paddingAngle={3} labelLine={false}
