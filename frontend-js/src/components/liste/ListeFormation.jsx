@@ -45,7 +45,7 @@ const ListeFormation = ({ onViewDashPro }) => {
     <div className="min-h-screen bg-gray-50">
 
       {/* ── Header sticky ── */}
-      <div className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-30">
+      <div className="border-b border-gray-100 shadow-sm sticky top-0 z-30">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
 
           {/* Back */}
@@ -129,7 +129,7 @@ const ListeFormation = ({ onViewDashPro }) => {
 
       {/* ── Table ── */}
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-4">
-        <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+        <div className="rounded-2xl shadow border border-gray-100 overflow-hidden">
           <AffichageFormation
             formations={formationsData}
             onEdit={openModification}
@@ -141,29 +141,13 @@ const ListeFormation = ({ onViewDashPro }) => {
       {/* ── Modal Réinscription ── */}
       {showReinscription && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
-                  <FaRedoAlt className="text-white" size={13} />
-                </div>
-                <h2 className="font-bold text-gray-800">Réinscription CFP</h2>
-              </div>
-              <button
-                onClick={closeReinscription}
-                className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 transition text-lg font-bold"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-4">
-              <ReinscriptionCfp
-                show={showReinscription}
-                handleclose={closeReinscription}
-                initialMatricule={selectedMat}
-                onReinscriptionSuccess={handleReinscriptionSuccess}
-              />
-            </div>
+          <div className="p-4">
+            <ReinscriptionCfp
+              show={showReinscription}
+              handleclose={closeReinscription}
+              initialMatricule={selectedMat}
+              onReinscriptionSuccess={handleReinscriptionSuccess}
+            />
           </div>
         </div>
       )}
